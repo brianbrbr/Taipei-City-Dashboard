@@ -1,0 +1,90 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "city": "臺北市",
+        "district": "中正區",
+        "station_name": "臺北車站生活圈 proxy",
+        "aqi": 78,
+        "pm25": 22.4,
+        "status": "普通",
+        "risk_level": "尖峰注意",
+        "sensor_role": "既有測站代表值",
+        "coverage_gap": "車站外圍微型感測不足",
+        "bike_context": "轉乘與短程 YouBike 需求高",
+        "suggestion": "尖峰短程可騎；往信義區建議避開忠孝西路與市民高架下方。"
+      },
+      "geometry": { "type": "Point", "coordinates": [121.51725, 25.04776] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "city": "新北市",
+        "district": "板橋區",
+        "station_name": "板橋車站轉乘廊道 proxy",
+        "aqi": 73,
+        "pm25": 21.1,
+        "status": "普通",
+        "risk_level": "跨市通勤注意",
+        "sensor_role": "既有測站代表值",
+        "coverage_gap": "車站到河濱路廊缺少連續監測",
+        "bike_context": "YouBike 轉乘、河濱替代線需求高",
+        "suggestion": "往新月橋建議優先走大漢溪河濱清淨線，可降低約三成污染暴露。"
+      },
+      "geometry": { "type": "Point", "coordinates": [121.46472, 25.01381] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "city": "臺北市",
+        "district": "文山區",
+        "station_name": "景美溪綠廊 proxy",
+        "aqi": 49,
+        "pm25": 13.9,
+        "status": "良好",
+        "risk_level": "適合騎乘",
+        "sensor_role": "低風險基準點",
+        "coverage_gap": "可作為綠廊對照組",
+        "bike_context": "親子、銀髮、慢速騎乘情境佳",
+        "suggestion": "適合作為清淨騎行示範路段，供其他路廊比較健康收益。"
+      },
+      "geometry": { "type": "Point", "coordinates": [121.53415, 25.01491] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "city": "新北市",
+        "district": "新店區",
+        "station_name": "新店溪左岸 proxy",
+        "aqi": 52,
+        "pm25": 14.8,
+        "status": "普通",
+        "risk_level": "低風險",
+        "sensor_role": "河濱清淨參考點",
+        "coverage_gap": "橋梁銜接點仍需補測",
+        "bike_context": "河濱長距離通勤與休閒混合",
+        "suggestion": "景美溪、新店溪沿線可作為清淨替代線骨幹。"
+      },
+      "geometry": { "type": "Point", "coordinates": [121.54131, 24.96763] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "city": "新北市",
+        "district": "永和區",
+        "station_name": "永安市場主幹道 proxy",
+        "aqi": 82,
+        "pm25": 24.6,
+        "status": "普通",
+        "risk_level": "高暴露熱點",
+        "sensor_role": "治理優先觀測點",
+        "coverage_gap": "巷弄替代線與主幹道落差需補點驗證",
+        "bike_context": "生活圈短程密集，尖峰機車車流高",
+        "suggestion": "建議避開中和路主幹道，導往巷弄或公園邊界清淨線。"
+      },
+      "geometry": { "type": "Point", "coordinates": [121.51416, 25.00727] }
+    }
+  ]
+}

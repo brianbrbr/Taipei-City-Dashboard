@@ -1,0 +1,149 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "grid_id": "G_TPE_DAAPARK",
+        "grid_name": "大安森林公園綠地格",
+        "pm25": 15.2,
+        "risk_score": 42,
+        "road_penalty": 1,
+        "green_bonus": 7,
+        "deployment_priority": 38,
+        "priority_label": "低優先：綠地基準格",
+        "planning_action": "保留為清淨路線基準點，監測頻率可低於主幹道。",
+        "evidence_note": "以環境部測站代表值，疊加公園綠覆 proxy 與道路等級修正。"
+      },
+      "geometry": { "type": "Point", "coordinates": [121.536, 25.0335] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "grid_id": "G_TPE_XINYI_ARTERY",
+        "grid_name": "信義路主幹道格",
+        "pm25": 20.8,
+        "risk_score": 72,
+        "road_penalty": 8,
+        "green_bonus": 1,
+        "deployment_priority": 86,
+        "priority_label": "高優先：主幹道暴露熱點",
+        "planning_action": "建議設微型感測器，並把清淨路線導往綠蔭退縮人行空間。",
+        "evidence_note": "以環境部測站代表值，疊加信義路車流與主幹道 proxy 修正。"
+      },
+      "geometry": { "type": "Point", "coordinates": [121.5515, 25.0336] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "grid_id": "G_TPE_101_GREEN",
+        "grid_name": "101 周邊退縮人行格",
+        "pm25": 16.1,
+        "risk_score": 49,
+        "road_penalty": 3,
+        "green_bonus": 4,
+        "deployment_priority": 55,
+        "priority_label": "中優先：活動人口高",
+        "planning_action": "可作為觀光與通勤混合區補測點，驗證大型路口空品變化。",
+        "evidence_note": "以測站代表值，疊加人流熱點與退縮人行空間 proxy。"
+      },
+      "geometry": { "type": "Point", "coordinates": [121.563, 25.034] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "grid_id": "G_NTPC_BANQIAO_ARTERY",
+        "grid_name": "板橋車站主幹道格",
+        "pm25": 21.4,
+        "risk_score": 75,
+        "road_penalty": 8,
+        "green_bonus": 1,
+        "deployment_priority": 88,
+        "priority_label": "高優先：跨市轉乘熱點",
+        "planning_action": "補點監測車站到河濱銜接段，支援跨市清淨通勤導引。",
+        "evidence_note": "以新北代表測站，疊加車站轉乘、主幹道與 YouBike 熱點 proxy。"
+      },
+      "geometry": { "type": "Point", "coordinates": [121.4638, 25.014] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "grid_id": "G_NTPC_RIVERSIDE",
+        "grid_name": "大漢溪河濱格",
+        "pm25": 14.2,
+        "risk_score": 38,
+        "road_penalty": 1,
+        "green_bonus": 8,
+        "deployment_priority": 42,
+        "priority_label": "低優先：河濱清淨廊道",
+        "planning_action": "作為清淨替代線，優先改善夜間照明與導引標示。",
+        "evidence_note": "以測站代表值，疊加河濱綠帶、低車流 proxy。"
+      },
+      "geometry": { "type": "Point", "coordinates": [121.4467, 25.0268] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "grid_id": "G_NTPC_XINYUE",
+        "grid_name": "新月橋周邊格",
+        "pm25": 15.1,
+        "risk_score": 43,
+        "road_penalty": 2,
+        "green_bonus": 6,
+        "deployment_priority": 49,
+        "priority_label": "中低優先：橋梁銜接驗證",
+        "planning_action": "補強橋梁銜接處監測，避免清淨線在進出橋口暴露升高。",
+        "evidence_note": "以測站代表值，疊加橋梁銜接與河濱綠帶 proxy。"
+      },
+      "geometry": { "type": "Point", "coordinates": [121.4359, 25.0322] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "grid_id": "G_NTPC_YONGAN_ARTERY",
+        "grid_name": "永安市場主幹道格",
+        "pm25": 24.6,
+        "risk_score": 84,
+        "road_penalty": 9,
+        "green_bonus": 1,
+        "deployment_priority": 94,
+        "priority_label": "最高優先：生活圈暴露熱點",
+        "planning_action": "優先部署微型感測器，並把 App 預設路線避開主幹道尖峰。",
+        "evidence_note": "以新北代表測站，疊加中和路車流、生活圈短程需求 proxy。"
+      },
+      "geometry": { "type": "Point", "coordinates": [121.5122, 25.0032] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "grid_id": "G_NTPC_YONGHE_ALLEY",
+        "grid_name": "永和巷弄住宅格",
+        "pm25": 15.5,
+        "risk_score": 39,
+        "road_penalty": 2,
+        "green_bonus": 5,
+        "deployment_priority": 47,
+        "priority_label": "中低優先：替代線驗證",
+        "planning_action": "作為永和主幹道替代線，補測巷弄實際清淨收益。",
+        "evidence_note": "以測站代表值，疊加巷弄低車流與住宅區 proxy。"
+      },
+      "geometry": { "type": "Point", "coordinates": [121.5113, 25.0065] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "grid_id": "G_NTPC_LEHUA",
+        "grid_name": "樂華夜市周邊格",
+        "pm25": 20.2,
+        "risk_score": 70,
+        "road_penalty": 6,
+        "green_bonus": 1,
+        "deployment_priority": 82,
+        "priority_label": "高優先：夜市人流熱點",
+        "planning_action": "建議部署行人尺度感測，並在尖峰導引低暴露進出路線。",
+        "evidence_note": "以測站代表值，疊加夜市人流、餐飲與支線道路 proxy。"
+      },
+      "geometry": { "type": "Point", "coordinates": [121.516, 25.0093] }
+    }
+  ]
+}

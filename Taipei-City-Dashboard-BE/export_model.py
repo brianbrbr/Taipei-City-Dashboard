@@ -6,9 +6,10 @@ from transformers import AutoTokenizer
 from optimum.onnxruntime import ORTModelForFeatureExtraction
 
 from pathlib import Path
+import os
 Path("./lm_model").mkdir(parents=True, exist_ok=True)
 
-MODEL_ID = "intfloat/multilingual-e5-base"
+MODEL_ID = os.getenv("LM_MODEL_ID", "intfloat/multilingual-e5-base")
 OUT_DIR  = "./lm_model/onnx-e5"   # 匯出資料夾
 
 # 1) 匯出成 ONNX（FeatureExtraction 會輸出 last_hidden_state）

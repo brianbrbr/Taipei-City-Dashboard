@@ -1,0 +1,43 @@
+競賽表單填寫稿（CleanBike／臺北城市儀表板延伸）
+================================================
+
+【使用的資料集名稱及連結】（格式：序.名稱-URL）
+
+1.環境部空氣品質監測(臺北市逐時)-https://data.moenv.gov.tw/dataset/detail/aqx_p_432
+
+2.TDX YouBike2.0 站點資料(臺北市)-https://tdx.transportdata.tw/api/basic/v2/Bike/Station/City/Taipei?%24format=JSON
+
+3.TDX YouBike2.0 站點資料(新北市)-https://tdx.transportdata.tw/api/basic/v2/Bike/Station/City/NewTaipei?%24format=JSON
+
+4.TDX 自行車道路網軌跡(臺北市)-https://tdx.transportdata.tw/api/basic/v2/Cycling/Shape/City/Taipei?%24format=JSON
+
+5.TDX 自行車道路網軌跡(新北市)-https://tdx.transportdata.tw/api/basic/v2/Cycling/Shape/City/NewTaipei?%24format=JSON
+
+6.TDX YouBike2.0 即時車位(臺北市)-https://tdx.transportdata.tw/api/basic/v2/Bike/Availability/City/Taipei?%24format=JSON
+
+7.TDX YouBike2.0 即時車位(新北市)-https://tdx.transportdata.tw/api/basic/v2/Bike/Availability/City/NewTaipei?%24format=JSON
+
+8.臺北市資料大平臺(入口)-https://data.taipei/
+
+9.新北市政府資料開放平臺(入口)-https://data.ntpc.gov.tw/
+
+10.環境部環境資料開放平臺(入口)-https://data.moenv.gov.tw/
+
+11.TDX 交通資料流通服務(入口)-https://tdx.transportdata.tw/
+
+---
+說明：
+- 第2–7項 URL 與本 repo 內 Taipei-City-Dashboard-DE DAG 所用來源一致（如 R0071_1、bike_path、R0051_3 等）。
+- 競賽 demo 目前儀表板可仍含「示範 GeoJSON」；上表為聲明與擴充正式版時之**官方資料來源依據**。
+
+================================================
+
+【簡述提案方向與內容 (100字以內)】
+
+於城市儀表板延伸 CleanBike：銜接 YouBike 與空品監測資料，對短程騎乘做暴露估算並並排最速／清淨路徑，輔助市民低碳與健康決策與政策溝通。（58字）
+
+================================================
+
+【簡述本次競賽提交內容所包含之生成式AI／AI 模型應用 (100字以內)】
+
+後端整合台灣智雲 LLM（langchaingo）支援對話與工具呼叫；另以本地 embedding 向量化寫入 Qdrant 做語意檢索，可輔助決策摘要等文字產出。（52字）

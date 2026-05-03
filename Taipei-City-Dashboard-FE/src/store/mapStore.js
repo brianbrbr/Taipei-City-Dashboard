@@ -95,11 +95,31 @@ export const useMapStore = defineStore("map", {
 		layerUpdateTime: {
 			// [layerId]: Date
 		},
+		// CleanBike：即時 Mapbox 路徑 + 格網暴露（地圖雙擊設起迄）
+		cleanBikePickMode: null,
+		cleanBikeStartLngLat: null,
+		cleanBikeEndLngLat: null,
+		cleanBikeStartMarker: null,
+		cleanBikeEndMarker: null,
+		/** 地圖範例路線：依 GeoJSON pair_id 篩選（最速 vs 清淨同一 OD） */
+		cleanBikeRoutePairFilter: "",
 	}),
 	actions: {
 		/* Initialize Mapbox */
 		// 1. Creates the mapbox instance and passes in initial configs
 		initializeMapBox() {
+			if (this.cleanBikeStartMarker) {
+				this.cleanBikeStartMarker.remove();
+				this.cleanBikeStartMarker = null;
+			}
+			if (this.cleanBikeEndMarker) {
+				this.cleanBikeEndMarker.remove();
+				this.cleanBikeEndMarker = null;
+			}
+			this.cleanBikePickMode = null;
+			this.cleanBikeStartLngLat = null;
+			this.cleanBikeEndLngLat = null;
+			this.cleanBikeRoutePairFilter = "";
 			this.map = null;
 			this.marker = null;
 			this.overlay = null;
@@ -138,6 +158,10 @@ export const useMapStore = defineStore("map", {
 					this.addPopup(event);
 				})
 				.on("dblclick", (event) => {
+					if (this.cleanBikePickMode) {
+						this.pickCleanBikeWaypoint(event.lngLat);
+						return;
+					}
 					let coordinates = event.lngLat;
 					this.tempMarkerCoordinates = coordinates;
 					this.marker.setLngLat(coordinates).addTo(this.map);
@@ -205,8 +229,8 @@ export const useMapStore = defineStore("map", {
 						})
 						.addLayer(metroTaipeiVillage);
 				});
-			// Taipei 3D Buildings
-			if (!authStore.isMobileDevice) {
+			// Taipei 3D Buildings are optional. Skip when no Mapbox tileset is configured.
+			if (!authStore.isMobileDevice && import.meta.env.VITE_MAPBOXTILE) {
 				this.map
 					.addSource("taipei_building_3d_source", {
 						type: "vector",
@@ -671,6 +695,13 @@ export const useMapStore = defineStore("map", {
 				config.filter = initialFilter;
 			}
 			this.map.addLayer(config);
+			this.addCleanBikeDecisionLayers(map_config);
+			if (
+				map_config.index === "cleanbike_routes_metrotaipei" &&
+				this.cleanBikeRoutePairFilter
+			) {
+				this.applyCleanBikeRoutePairFilter(this.cleanBikeRoutePairFilter);
+			}
 			if (
 				map_config.layerId ===
 					"wee_hazard_water-fill-extrusion-metrotaipei" ||
@@ -686,6 +717,557 @@ export const useMapStore = defineStore("map", {
 			this.loadingLayers = this.loadingLayers.filter(
 				(el) => el !== map_config.layerId,
 			);
+		},
+		addCleanBikeDecisionLayers(map_config) {
+			if (!map_config.layerId?.startsWith("cleanbike_")) return;
+			const source = `${map_config.layerId}-source`;
+			const hasLayer = (id) => this.map.getLayer(id);
+
+			if (map_config.index === "cleanbike_routes_metrotaipei") {
+				const casingLayerId = `${map_config.layerId}-casing`;
+				const labelLayerId = `${map_config.layerId}-label`;
+
+				if (!hasLayer(casingLayerId)) {
+					this.map.addLayer(
+						{
+							id: casingLayerId,
+							type: "line",
+							source,
+							paint: {
+								"line-color": "#0B0F12",
+								"line-width": [
+									"case",
+									["==", ["get", "route_type"], "清淨"],
+									[
+										"interpolate",
+										["linear"],
+										["zoom"],
+										10,
+										8,
+										15,
+										13,
+									],
+									[
+										"interpolate",
+										["linear"],
+										["zoom"],
+										10,
+										5,
+										15,
+										9,
+									],
+								],
+								"line-opacity": 0.62,
+							},
+							layout: {
+								"line-join": "round",
+								"line-cap": "round",
+							},
+						},
+						map_config.layerId,
+					);
+				}
+				if (!hasLayer(labelLayerId)) {
+					this.map.addLayer({
+						id: labelLayerId,
+						type: "symbol",
+						source,
+						layout: {
+							"symbol-placement": "line-center",
+							"text-field": [
+								"concat",
+								["get", "route_type"],
+								" / ",
+								["get", "tradeoff_label"],
+							],
+							"text-size": [
+								"interpolate",
+								["linear"],
+								["zoom"],
+								10,
+								11,
+								15,
+								14,
+							],
+							"text-allow-overlap": true,
+							"text-ignore-placement": true,
+						},
+						paint: {
+							"text-color": [
+								"match",
+								["get", "route_type"],
+								"清淨",
+								"#D6FFF3",
+								"最速",
+								"#FFF0B8",
+								"#FFFFFF",
+							],
+							"text-halo-color": "#101418",
+							"text-halo-width": 2,
+						},
+					});
+				}
+			}
+
+			if (map_config.index === "cleanbike_air_points_metrotaipei") {
+				const labelLayerId = `${map_config.layerId}-label`;
+				if (!hasLayer(labelLayerId)) {
+					this.map.addLayer({
+						id: labelLayerId,
+						type: "symbol",
+						source,
+						layout: {
+							"text-field": [
+								"concat",
+								["get", "district"],
+								"\nPM2.5 ",
+								["to-string", ["get", "pm25"]],
+							],
+							"text-size": [
+								"interpolate",
+								["linear"],
+								["zoom"],
+								9,
+								0,
+								11,
+								11,
+								14,
+								13,
+							],
+							"text-offset": [0, 1.7],
+							"text-anchor": "top",
+							"text-allow-overlap": true,
+						},
+						paint: {
+							"text-color": "#F5F7FA",
+							"text-halo-color": "#101418",
+							"text-halo-width": 1.8,
+						},
+					});
+				}
+			}
+
+			if (map_config.index === "cleanbike_air_grid_metrotaipei") {
+				const labelLayerId = `${map_config.layerId}-priority-label`;
+				if (!hasLayer(labelLayerId)) {
+					this.map.addLayer({
+						id: labelLayerId,
+						type: "symbol",
+						source,
+						filter: [">=", ["get", "deployment_priority"], 80],
+						layout: {
+							"text-field": [
+								"concat",
+								"補點 ",
+								["to-string", ["get", "deployment_priority"]],
+							],
+							"text-size": [
+								"interpolate",
+								["linear"],
+								["zoom"],
+								9,
+								0,
+								11,
+								11,
+								14,
+								13,
+							],
+							"text-offset": [0, -1.4],
+							"text-anchor": "bottom",
+							"text-allow-overlap": true,
+						},
+						paint: {
+							"text-color": "#FFFFFF",
+							"text-halo-color": "#B42318",
+							"text-halo-width": 2,
+						},
+					});
+				}
+			}
+		},
+		setCleanBikeDecisionLayerVisibility(mapLayerId, visibility) {
+			const companionLayerIds = [
+				`${mapLayerId}-casing`,
+				`${mapLayerId}-label`,
+				`${mapLayerId}-priority-label`,
+			];
+			companionLayerIds.forEach((layerId) => {
+				if (this.map.getLayer(layerId)) {
+					this.map.setLayoutProperty(layerId, "visibility", visibility);
+				}
+			});
+		},
+		setCleanBikePickMode(mode) {
+			this.cleanBikePickMode = mode;
+			const dialogStore = useDialogStore();
+			if (mode === "start") {
+				dialogStore.showNotification(
+					"info",
+					"請在地圖上雙擊設定「起點」",
+				);
+			} else if (mode === "end") {
+				dialogStore.showNotification(
+					"info",
+					"請在地圖上雙擊設定「終點」",
+				);
+			}
+		},
+		pickCleanBikeWaypoint(lngLat) {
+			if (!this.map || !this.cleanBikePickMode) return;
+			const dialogStore = useDialogStore();
+			const coord = [lngLat.lng, lngLat.lat];
+			if (this.cleanBikePickMode === "start") {
+				this.cleanBikeStartLngLat = coord;
+				if (!this.cleanBikeStartMarker) {
+					this.cleanBikeStartMarker = new mapboxGl.Marker({
+						color: "#4CB495",
+					});
+				}
+				this.cleanBikeStartMarker.setLngLat(lngLat).addTo(this.map);
+				dialogStore.showNotification("success", "已設定起點");
+			} else if (this.cleanBikePickMode === "end") {
+				this.cleanBikeEndLngLat = coord;
+				if (!this.cleanBikeEndMarker) {
+					this.cleanBikeEndMarker = new mapboxGl.Marker({
+						color: "#ED6A45",
+					});
+				}
+				this.cleanBikeEndMarker.setLngLat(lngLat).addTo(this.map);
+				dialogStore.showNotification("success", "已設定終點");
+			}
+			this.cleanBikePickMode = null;
+		},
+		clearCleanBikeWaypoints() {
+			this.cleanBikePickMode = null;
+			this.cleanBikeStartLngLat = null;
+			this.cleanBikeEndLngLat = null;
+			if (this.cleanBikeStartMarker) {
+				this.cleanBikeStartMarker.remove();
+				this.cleanBikeStartMarker = null;
+			}
+			if (this.cleanBikeEndMarker) {
+				this.cleanBikeEndMarker.remove();
+				this.cleanBikeEndMarker = null;
+			}
+		},
+		clearCleanBikeLiveRoutes() {
+			if (!this.map) return;
+			const ids = [
+				"cleanbike-live-routes-label",
+				"cleanbike-live-routes-line",
+				"cleanbike-live-routes-casing",
+			];
+			ids.forEach((id) => {
+				if (this.map.getLayer(id)) {
+					this.map.removeLayer(id);
+				}
+			});
+			if (this.map.getSource("cleanbike-live-routes-source")) {
+				this.map.removeSource("cleanbike-live-routes-source");
+			}
+		},
+		/** 最速 vs 清淨圖表專用：不依賴儀表板圖層開關，直接畫在底圖上 */
+		clearCleanBikeComparePreviewRoutes() {
+			if (!this.map) return;
+			const ids = [
+				"cleanbike-compare-preview-label",
+				"cleanbike-compare-preview-line",
+				"cleanbike-compare-preview-casing",
+			];
+			ids.forEach((id) => {
+				if (this.map.getLayer(id)) {
+					this.map.removeLayer(id);
+				}
+			});
+			if (this.map.getSource("cleanbike-compare-preview-source")) {
+				this.map.removeSource("cleanbike-compare-preview-source");
+			}
+		},
+		/**
+		 * @param {GeoJSON.Feature[]} features LineString，properties 需含 route_type（最速｜清淨）等
+		 */
+		setCleanBikeComparePreviewRoutes(features) {
+			if (!this.map || !features?.length) return;
+			const run = () => {
+				if (!this.map) return;
+				const srcId = "cleanbike-compare-preview-source";
+				const fc = { type: "FeatureCollection", features };
+				let source = this.map.getSource(srcId);
+				if (source) {
+					source.setData(fc);
+					return;
+				}
+				this.map.addSource(srcId, {
+					type: "geojson",
+					data: fc,
+				});
+				this.map.addLayer({
+					id: "cleanbike-compare-preview-casing",
+					type: "line",
+					source: srcId,
+					paint: {
+						"line-color": "#0B0F12",
+						"line-width": [
+							"case",
+							["==", ["get", "route_type"], "清淨"],
+							[
+								"interpolate",
+								["linear"],
+								["zoom"],
+								10,
+								8,
+								15,
+								13,
+							],
+							[
+								"interpolate",
+								["linear"],
+								["zoom"],
+								10,
+								5,
+								15,
+								9,
+							],
+						],
+						"line-opacity": 0.65,
+					},
+					layout: {
+						"line-join": "round",
+						"line-cap": "round",
+					},
+				});
+				this.map.addLayer({
+					id: "cleanbike-compare-preview-line",
+					type: "line",
+					source: srcId,
+					paint: {
+						"line-color": [
+							"match",
+							["get", "route_type"],
+							"清淨",
+							"#4CB495",
+							"最速",
+							"#F5C860",
+							"#56CCF2",
+						],
+						"line-width": [
+							"case",
+							["==", ["get", "route_type"], "清淨"],
+							[
+								"interpolate",
+								["linear"],
+								["zoom"],
+								10,
+								5,
+								15,
+								9,
+							],
+							[
+								"interpolate",
+								["linear"],
+								["zoom"],
+								10,
+								3,
+								15,
+								6,
+							],
+						],
+						"line-opacity": [
+							"case",
+							["==", ["get", "route_type"], "清淨"],
+							0.96,
+							0.78,
+						],
+					},
+					layout: {
+						"line-join": "round",
+						"line-cap": "round",
+					},
+				});
+				this.map.addLayer({
+					id: "cleanbike-compare-preview-label",
+					type: "symbol",
+					source: srcId,
+					layout: {
+						"symbol-placement": "line-center",
+						"text-field": [
+							"concat",
+							["get", "route_type"],
+							" / ",
+							["get", "tradeoff_label"],
+						],
+						"text-size": [
+							"interpolate",
+							["linear"],
+							["zoom"],
+							10,
+							11,
+							15,
+							14,
+						],
+						"text-allow-overlap": true,
+						"text-ignore-placement": true,
+					},
+					paint: {
+						"text-color": [
+							"match",
+							["get", "route_type"],
+							"清淨",
+							"#D6FFF3",
+							"最速",
+							"#FFF0B8",
+							"#FFFFFF",
+						],
+						"text-halo-color": "#101418",
+						"text-halo-width": 2,
+					},
+				});
+			};
+			if (this.map.isStyleLoaded()) {
+				run();
+			} else {
+				this.map.once("load", run);
+			}
+		},
+		/** @param {GeoJSON.Feature[]} features LineString features with route_rank, route_label, ... */
+		setCleanBikeLiveRoutes(features) {
+			if (!this.map) return;
+			this.clearCleanBikeLiveRoutes();
+			if (!features.length) return;
+			this.map.addSource("cleanbike-live-routes-source", {
+				type: "geojson",
+				data: { type: "FeatureCollection", features },
+			});
+			this.map.addLayer({
+				id: "cleanbike-live-routes-casing",
+				type: "line",
+				source: "cleanbike-live-routes-source",
+				paint: {
+					"line-color": "#0B0F12",
+					"line-width": [
+						"interpolate",
+						["linear"],
+						["zoom"],
+						10,
+						["case", ["==", ["get", "route_rank"], 1], 10, 7],
+						15,
+						["case", ["==", ["get", "route_rank"], 1], 14, 10],
+					],
+					"line-opacity": 0.55,
+				},
+				layout: {
+					"line-cap": "round",
+					"line-join": "round",
+				},
+			});
+			this.map.addLayer({
+				id: "cleanbike-live-routes-line",
+				type: "line",
+				source: "cleanbike-live-routes-source",
+				paint: {
+					"line-color": [
+						"case",
+						["==", ["get", "route_rank"], 1],
+						"#4CB495",
+						"#F5C860",
+					],
+					"line-width": [
+						"interpolate",
+						["linear"],
+						["zoom"],
+						10,
+						["case", ["==", ["get", "route_rank"], 1], 5, 3.5],
+						15,
+						["case", ["==", ["get", "route_rank"], 1], 9, 6],
+					],
+					"line-opacity": 0.92,
+				},
+				layout: {
+					"line-cap": "round",
+					"line-join": "round",
+				},
+			});
+			this.map.addLayer({
+				id: "cleanbike-live-routes-label",
+				type: "symbol",
+				source: "cleanbike-live-routes-source",
+				layout: {
+					"symbol-placement": "line-center",
+					"text-field": ["get", "route_label"],
+					"text-size": [
+						"interpolate",
+						["linear"],
+						["zoom"],
+						10,
+						11,
+						15,
+						13,
+					],
+					"text-allow-overlap": true,
+					"text-ignore-placement": true,
+				},
+				paint: {
+					"text-color": "#F5F7FA",
+					"text-halo-color": "#101418",
+					"text-halo-width": 2,
+				},
+			});
+			const bounds = new mapboxGl.LngLatBounds();
+			for (const f of features) {
+				const coords = f.geometry?.coordinates;
+				if (!coords) continue;
+				for (const c of coords) {
+					bounds.extend(c);
+				}
+			}
+			try {
+				this.map.fitBounds(bounds, {
+					padding: 72,
+					maxZoom: 14,
+					duration: 500,
+				});
+			} catch {
+				/* ignore */
+			}
+		},
+		applyCleanBikeRoutePairFilter(pairId) {
+			if (!this.map) return;
+			this.cleanBikeRoutePairFilter = pairId || "";
+			const filterExpr = pairId
+				? ["==", ["get", "pair_id"], pairId]
+				: null;
+			Object.entries(this.mapConfigs).forEach(([layerId, cfg]) => {
+				if (cfg.index !== "cleanbike_routes_metrotaipei") return;
+				if (this.map.getLayer(layerId)) {
+					this.map.setFilter(layerId, filterExpr);
+				}
+				["casing", "label"].forEach((suffix) => {
+					const lid = `${layerId}-${suffix}`;
+					if (this.map.getLayer(lid)) {
+						this.map.setFilter(lid, filterExpr);
+					}
+				});
+			});
+		},
+		fitBoundsFromRouteFeatures(features) {
+			if (!this.map || !features?.length) return;
+			const bounds = new mapboxGl.LngLatBounds();
+			for (const f of features) {
+				const coords = f.geometry?.coordinates;
+				if (!coords) continue;
+				for (const c of coords) {
+					bounds.extend(c);
+				}
+			}
+			try {
+				this.map.fitBounds(bounds, {
+					padding: 80,
+					maxZoom: 14,
+					duration: 550,
+				});
+			} catch {
+				/* ignore */
+			}
 		},
 		animateFilter(mapLayerId) {
 			this.stopAnimation();
@@ -1842,6 +2424,7 @@ export const useMapStore = defineStore("map", {
 						"visible",
 					);
 				}
+				this.setCleanBikeDecisionLayerVisibility(mapLayerId, "visible");
 			}
 		},
 		// 6. Turn off the visibility of an exisiting map layer but don't remove it completely
@@ -1862,6 +2445,7 @@ export const useMapStore = defineStore("map", {
 						"visibility",
 						"none",
 					);
+					this.setCleanBikeDecisionLayerVisibility(mapLayerId, "none");
 				}
 				this.currentVisibleLayers = this.currentVisibleLayers.filter(
 					(element) => element !== mapLayerId,
@@ -2565,6 +3149,9 @@ export const useMapStore = defineStore("map", {
 		/* Clearing the map */
 		// 1. Called when the user is switching between maps
 		clearOnlyLayers() {
+			this.clearCleanBikeLiveRoutes();
+			this.clearCleanBikeComparePreviewRoutes();
+			this.cleanBikeRoutePairFilter = "";
 			this.currentLayers.forEach((element) => {
 				this.map.removeLayer(element);
 				if (this.map.getSource(`${element}-source`)) {
@@ -2578,6 +3165,10 @@ export const useMapStore = defineStore("map", {
 		},
 		// 2. Called when user navigates away from the map
 		clearEntireMap() {
+			this.clearCleanBikeLiveRoutes();
+			this.clearCleanBikeComparePreviewRoutes();
+			this.clearCleanBikeWaypoints();
+			this.cleanBikeRoutePairFilter = "";
 			this.currentLayers = [];
 			this.mapConfigs = {};
 			this.map = null;

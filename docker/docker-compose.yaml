@@ -32,12 +32,13 @@ services:
     ports:
       - "8080:80"
     working_dir: /opt/Taipei-City-Dashboard-FE
-    command: ["npm", "run", "dev"]
+    command: ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "80"]
 
   dashboard-be:
     # image: golang:${GOLANG_IMAGE_TAG:-latest} #Go Lang Image Without Model and onnxruntime
     image: dashboard-be-dev:latest #Local Development
     # image: dashboard-be:latest #Test Prod Image
+    user: "0:0"
     build:
       context: ../Taipei-City-Dashboard-BE
       dockerfile: Dockerfile
@@ -47,6 +48,8 @@ services:
       GIN_MODE: ${GIN_MODE}
       GIN_DOMAIN: ${GIN_DOMAIN}
       GIN_PORT: ${GIN_PORT:-8080}
+      GOPROXY: ${GOPROXY:-https://goproxy.cn,direct}
+      GOSUMDB: ${GOSUMDB:-sum.golang.google.cn}
       JWT_SECRET: ${JWT_SECRET}
       IDNO_SALT: ${IDNO_SALT}
       ISSO_CLIENT_ID: ${ISSO_CLIENT_ID}
@@ -65,6 +68,7 @@ services:
       REDIS_PORT: ${REDIS_PORT}
       REDIS_PASSWORD: ${REDIS_PASSWORD:-}
       REDIS_DB: ${REDIS_DB}
+      DISABLE_LM_MODEL: ${DISABLE_LM_MODEL:-true}
       QDRANT_URL: ${QDRANT_URL}
       QDRANT_COLLECTION: ${QDRANT_COLLECTION}
       QDRANT_API_KEY: ${QDRANT_API_KEY}
@@ -77,12 +81,15 @@ services:
       TWCC_MAX_CONCURRENT: ${TWCC_MAX_CONCURRENT}
     volumes:
       - ../Taipei-City-Dashboard-BE:/opt/Taipei-City-Dashboard-BE
+      - be_go_pkg:/go/pkg/mod
+      - be_go_build:/tmp/go-build-cache
     working_dir: /opt/Taipei-City-Dashboard-BE
     ports:
       - "8088:${PORT:-8080}"
     command: ["go", "run", "main.go"]
 
   vector-db-upgrade:
+    profiles: ["tools"]
     build:
       context: ./qdrant-upgrade
       dockerfile: Dockerfile
@@ -102,6 +109,9 @@ networks:
   default:
     name: br_dashboard
     external: true
+volumes:
+  be_go_pkg:
+  be_go_build:
 ###########################################
 ## Create docker network command sample: ##
 ## ------------------------------------- ##################################################################

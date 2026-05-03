@@ -17,6 +17,7 @@ def main():
     QDRANT_URL = os.getenv("QDRANT_URL", "http://qdrant:6333")
     QDRANT_API_KEY = os.getenv("QDRANT_API_KEY", "gogosecurity")
     COLLECTION_NAME = os.getenv("QDRANT_COLLECTION_NAME", "query_charts")
+    MODEL_ID = os.getenv("LM_MODEL_ID", "intfloat/multilingual-e5-base")
     
     # === 1. 從 PostgreSQL 讀取資料 ===
     # Encode special characters for connection string
@@ -54,8 +55,8 @@ def main():
     df["text"] = df["long_desc"] + " " + df["use_case"]
     
     # 載入模型
-    print("載入 SentenceTransformer 模型...")
-    model = SentenceTransformer("intfloat/multilingual-e5-base")
+    print(f"載入 SentenceTransformer 模型：{MODEL_ID}")
+    model = SentenceTransformer(MODEL_ID)
     
     # 轉成向量
     print("生成向量嵌入...")

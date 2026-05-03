@@ -1,14 +1,34 @@
 # ====== Model Exporter ======
 FROM python:3.12-slim AS model_export
 ARG HF_TOKEN   # 若你有 Hugging Face 私有模型或想提高速率，可傳 token（可留空）
-ENV HF_HOME=/root/.cache/huggingface
+ENV HF_HOME=/root/.cache/huggingface \
+    PIP_DEFAULT_TIMEOUT=1000 \
+    PIP_RETRIES=10 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
 WORKDIR /w
 
 # 安裝匯出所需套件
 RUN pip install --no-cache-dir \
-      "transformers>=4.44" \
-      "optimum[onnxruntime]>=1.20.0" \
-      onnxruntime
+      --index-url https://download.pytorch.org/whl/cpu \
+      "torch==2.5.1+cpu"
+RUN pip install --no-cache-dir \
+      "transformers==4.41.2" \
+      "huggingface-hub==0.36.2" \
+      "tokenizers==0.19.1" \
+      "safetensors==0.7.0" \
+      "sentencepiece==0.2.1" \
+      "onnx==1.21.0" \
+      "onnxruntime==1.23.2" \
+      "coloredlogs==15.0.1" \
+      "flatbuffers==25.12.19" \
+      "protobuf==7.34.1" \
+      "numpy==2.4.4" \
+      "packaging==26.2" \
+      "pyyaml==6.0.3" \
+      "requests==2.33.1" \
+      "tqdm==4.67.3"
+RUN pip install --no-cache-dir --no-deps \
+      "optimum==1.20.0"
 
 # 匯出：feature-extraction
 # 產出到 /out/onnx-e5
@@ -111,8 +131,7 @@ RUN set -eux; \
 
 ENV LD_LIBRARY_PATH=/usr/lib
 ENV GOCACHE=/tmp/go-build-cache
-
-COPY --from=model_export /out/onnx-e5 /opt/lm_model/onnx-e5
+ENV DISABLE_LM_MODEL=true
 
 WORKDIR /app
 EXPOSE 8080

@@ -12,7 +12,7 @@ const serverConfig = isDockerCompose
 		port: 80, // 如有需要可變更 port
 		proxy: {
 			"/api/dev": {
-				target: "http://dashboard-be:8080",
+				target: process?.env.VITE_DEV_API_TARGET || "http://dashboard-be:8080",
 				changeOrigin: true,
 				rewrite: (path) => path.replace("/dev", "/v1")
 			}

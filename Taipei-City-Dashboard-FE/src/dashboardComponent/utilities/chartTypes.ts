@@ -23,4 +23,6 @@ export const chartTypes: chartType = {
 	IndicatorChart: "指標圖", // V
 	MapLegend: "地圖圖例", // V
 	TextUnitChart: "文字數值圖", // V
+	CleanBikePlannerChart: "清淨騎行路線卡",
+	CleanBikeExposureCompareChart: "最速 vs 清淨（地圖範例）",
 };
