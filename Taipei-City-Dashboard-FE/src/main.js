@@ -19,7 +19,7 @@ import App from "./App.vue";
 import router from "./router";
 import { createPinia } from "pinia";
 import VueApexCharts from "vue3-apexcharts";
-import { useDebounceFn } from "@vueuse/core";
+import debounce from "lodash/debounce";
 import horizontalWheel from './directives/horizontalWheel';
 
 const app = createApp(App);
@@ -31,9 +31,9 @@ pinia.use(({ options, store }) => {
 	if (options.debounce) {
 		return Object.keys(options.debounce).reduce(
 			(debouncedActions, action) => {
-				debouncedActions[action] = useDebounceFn(
-					store[action].bind(store),
-					options.debounce[action],
+				debouncedActions[action] = debounce(
+					store[action],
+					options.debounce[action]
 				);
 				return debouncedActions;
 			},
